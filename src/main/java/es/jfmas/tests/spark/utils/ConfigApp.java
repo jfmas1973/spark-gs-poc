@@ -14,7 +14,7 @@ public final class ConfigApp {
 	public static final boolean LOG_DS_STATISTICS = false;
 	
 	/** Connection pool configuration **/
-	public static final Integer MAX_POOL_SIZE = 50;
+	public static final Integer MAX_POOL_SIZE = 150;
 	public static final String DB_URL = "jdbc:oracle:thin:@localhost:1521:XE";
 	public static final String DB_USER = "spark";
 	public static final String DB_PASSWORD = "123456";
