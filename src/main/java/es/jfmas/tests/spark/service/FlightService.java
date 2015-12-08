@@ -7,9 +7,8 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
-import es.jfmas.tests.spark.MigrateGSApp;
-import es.jfmas.tests.spark.exception.RetryCheckedException;
 import es.jfmas.tests.spark.model.FlightModel;
+import es.jfmas.tests.spark.utils.ConfigApp;
 import es.jfmas.tests.spark.utils.JdbcConnection;
 import es.jfmas.tests.spark.utils.MappingUtils;
 
@@ -162,7 +161,7 @@ public final class FlightService {
 	
 	@SuppressWarnings("all")
 	private static void logDataSourceStatistics(){
-		if (MigrateGSApp.LOG_DS_STATISTICS && Calendar.getInstance().get(Calendar.SECOND) % 30 == 0) {
+		if (ConfigApp.LOG_DS_STATISTICS && Calendar.getInstance().get(Calendar.SECOND) % 30 == 0) {
 			JdbcConnection.logActiveConnections();
 		}
 	}

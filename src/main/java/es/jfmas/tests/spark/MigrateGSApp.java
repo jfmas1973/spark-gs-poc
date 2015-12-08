@@ -14,33 +14,30 @@ import org.apache.spark.sql.SQLContext;
 
 import es.jfmas.tests.spark.model.FlightModel;
 import es.jfmas.tests.spark.service.FlightService;
+import es.jfmas.tests.spark.utils.ConfigApp;
 
 public class MigrateGSApp implements Serializable {
 
 	/** Serial Id **/
 	private static final long serialVersionUID = 8062176647661101782L;
 	
-	public static final int NUM_NODES = 100; 
-	public static final int BATCH_SIZE = 10000; 
-	public static final boolean LOG_DS_STATISTICS = false;
-	
 	public static void convertToJson() {
 		
 		//Start the job
-	    SparkConf conf = new SparkConf().setAppName("MigrateGSApp").setMaster("local["+NUM_NODES+"]");
+	    SparkConf conf = new SparkConf().setAppName("MigrateGSApp").setMaster("local["+ConfigApp.NUM_NODES+"]");
 	    JavaSparkContext sc = new JavaSparkContext(conf);
 		
-	    int partialSize = BATCH_SIZE;
+	    int partialSize = ConfigApp.BATCH_SIZE;
 	    int currentPosition = 0;
 	    int totalCount = 0;
-	    while(partialSize == BATCH_SIZE) {
-		    List<FlightModel> listFlights = FlightService.readFlights(currentPosition, BATCH_SIZE);
+	    while(partialSize == ConfigApp.BATCH_SIZE) {
+		    List<FlightModel> listFlights = FlightService.readFlights(currentPosition, ConfigApp.BATCH_SIZE);
 		    partialSize = listFlights.size();
 		    currentPosition = currentPosition + partialSize;
 		    if(partialSize == 0){
 		    	continue; // end of process
 		    }
-		    JavaRDD<FlightModel> rddModels = sc.parallelize(listFlights, NUM_NODES);
+		    JavaRDD<FlightModel> rddModels = sc.parallelize(listFlights, ConfigApp.NUM_NODES);
 		    
 		    JavaRDD<Integer> rddResults = rddModels.map(new Function<FlightModel, Integer>() {
 				/** Serial id **/
@@ -71,7 +68,7 @@ public class MigrateGSApp implements Serializable {
 	public static void convertToJsonSqlContext() {
 		
 		//Start the job
-	    SparkConf conf = new SparkConf().setAppName("MigrateGSApp").setMaster("local["+NUM_NODES+"]");
+	    SparkConf conf = new SparkConf().setAppName("MigrateGSApp").setMaster("local["+ConfigApp.NUM_NODES+"]");
 	    JavaSparkContext sc = new JavaSparkContext(conf);
 	    SQLContext sqlContext = new SQLContext(sc);
 		
@@ -84,7 +81,7 @@ public class MigrateGSApp implements Serializable {
 		options.put("partitionColumn", "FLIGHTID");
 		options.put("lowerBound", "400770");
 		options.put("upperBound", "5671598");
-		options.put("numPartitions", ""+NUM_NODES);
+		options.put("numPartitions", ""+ConfigApp.NUM_NODES);
 
 		DataFrame jdbcDF = sqlContext.read().format("jdbc").options(options).load();
 		
@@ -99,11 +96,11 @@ public class MigrateGSApp implements Serializable {
 		
 		String logFile = "/home/jfmas/Descargas/FlightsDb/Test.csv"; // Should be some file on your system
 		//String logFile = "/home/jfmas/Descargas/FlightsDb/1990.csv"; // Should be some file on your system
-	    SparkConf conf = new SparkConf().setAppName("MigrateGSApp").setMaster("local["+NUM_NODES+"]");
+	    SparkConf conf = new SparkConf().setAppName("MigrateGSApp").setMaster("local["+ConfigApp.NUM_NODES+"]");
 		//SparkConf conf = new SparkConf().setAppName("MigrateGSApp").setMaster("spark://hp-pavilion-g6:7077");
 	    JavaSparkContext sc = new JavaSparkContext(conf);
 	    
-	    JavaRDD<String> logData = sc.textFile(logFile, NUM_NODES).cache();
+	    JavaRDD<String> logData = sc.textFile(logFile, ConfigApp.NUM_NODES).cache();
 	    //JavaRDD<String> logData = sc.textFile(logFile).cache();
 	    
 	    System.out.println("Partitions : " + logData.partitions().size());

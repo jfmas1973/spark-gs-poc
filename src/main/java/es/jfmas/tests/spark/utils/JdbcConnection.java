@@ -10,12 +10,8 @@ import com.codahale.metrics.MetricRegistry;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
-import es.jfmas.tests.spark.MigrateGSApp;
-
 public final class JdbcConnection {
 
-	public static final Integer MAX_POOL_SIZE = MigrateGSApp.NUM_NODES * 2;
-	
 	private static HikariDataSource dataSource;
 	private static MetricRegistry registry = new MetricRegistry();
 	
@@ -25,10 +21,10 @@ public final class JdbcConnection {
 		HikariConfig config = new HikariConfig();
 		config.setPoolName("Spark");
 		config.setDriverClassName("oracle.jdbc.driver.OracleDriver");
-		config.setJdbcUrl("jdbc:oracle:thin:@localhost:1521:XE");
-		config.setUsername("spark");
-		config.setPassword("123456");
-		config.setMaximumPoolSize(MAX_POOL_SIZE);
+		config.setJdbcUrl(ConfigApp.DB_URL);
+		config.setUsername(ConfigApp.DB_USER);
+		config.setPassword(ConfigApp.DB_PASSWORD);
+		config.setMaximumPoolSize(ConfigApp.MAX_POOL_SIZE);
 		config.setConnectionTestQuery("SELECT 1 FROM DUAL");
 		
 		// Enable metrics
