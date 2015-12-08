@@ -8,6 +8,7 @@ import java.util.Map;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.sql.DataFrame;
@@ -66,7 +67,7 @@ public class MigrateGSApp implements Serializable {
 			}
 		}); 
 	    
-	    System.out.println("Total rows saved as Json (Alternate) : " + totalCount);	    
+	    System.out.println("Total rows saved as Json (version C) : " + totalCount);	    
 	    
 	    sc.close();
 	    
@@ -96,19 +97,16 @@ public class MigrateGSApp implements Serializable {
 			}
 		});
 
-	    // Big List, this could create an Out of Memory
-	    List<FlightModel> totalList = rddListModels.reduce(new Function2<List<FlightModel>, List<FlightModel>, List<FlightModel>>() {
+	    JavaRDD<FlightModel> rddModels = rddListModels.flatMap(new FlatMapFunction<List<FlightModel>, FlightModel>() {
 			/** Serial id **/
-			private static final long serialVersionUID = 2206508700421367647L;
+			private static final long serialVersionUID = -3198082958385451408L;
 			@Override
-			public List<FlightModel> call(List<FlightModel> v1,
-					List<FlightModel> v2) throws Exception {
-				v1.addAll(v2);
-				return v1;
-			}
-	    	
-		});
-	    JavaRDD<FlightModel> rddModels = sc.parallelize(totalList, ConfigApp.NUM_NODES);
+			public Iterable<FlightModel> call(List<FlightModel> t)
+					throws Exception {
+				return t;
+			}	    	
+		});	    	    
+	   	    
 	    JavaRDD<Integer> rddResults = rddModels.map(new Function<FlightModel, Integer>() {
 			/** Serial id **/
 			private static final long serialVersionUID = 5666614119965640487L;
@@ -128,7 +126,7 @@ public class MigrateGSApp implements Serializable {
 			}
 		}); 
 	    
-	    System.out.println("Total rows saved as Json (Alternate) : " + totalCount);	    
+	    System.out.println("Total rows saved as Json (version B) : " + totalCount);	    
 	    
 	    sc.close();
 	    
