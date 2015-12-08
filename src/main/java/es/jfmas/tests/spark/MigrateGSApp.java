@@ -22,6 +22,56 @@ public class MigrateGSApp implements Serializable {
 	/** Serial Id **/
 	private static final long serialVersionUID = 8062176647661101782L;
 
+	
+	public static void convertToJsonC() {
+		
+		//Start the job
+	    SparkConf conf = new SparkConf().setAppName("MigrateGSApp").setMaster("local["+ConfigApp.NUM_NODES+"]");
+	    JavaSparkContext sc = new JavaSparkContext(conf);
+		
+	    int partialSize = ConfigApp.BATCH_SIZE;
+	    int currentPosition = 0;
+
+	    JavaRDD<FlightModel> rddTotalModels = sc.parallelize(new ArrayList<FlightModel>(), ConfigApp.NUM_NODES);
+
+	    System.out.println(">>>> Build the big RDD");
+	    while(partialSize == ConfigApp.BATCH_SIZE) {
+		    List<FlightModel> listFlights = FlightService.readFlights(currentPosition, ConfigApp.BATCH_SIZE);
+		    partialSize = listFlights.size();
+		    currentPosition = currentPosition + partialSize;
+		    if(partialSize == 0){
+		    	continue; // end of process
+		    }
+		    JavaRDD<FlightModel> rddModels = sc.parallelize(listFlights, ConfigApp.NUM_NODES);
+		    rddTotalModels = rddTotalModels.union(rddModels);
+	    }
+	    
+	    System.out.println(">>>> Save the big RDD into db");
+	    JavaRDD<Integer> rddResults = rddTotalModels.map(new Function<FlightModel, Integer>() {
+			/** Serial id **/
+			private static final long serialVersionUID = 5666614119965640487L;
+			@Override
+			public Integer call(FlightModel model) throws Exception {
+				return FlightService.saveAsJson(model);
+			}
+		});
+
+	    System.out.println(">>>> Count results");
+	    int totalCount = rddResults.reduce(new Function2<Integer, Integer, Integer>() {
+			/** Serial id **/
+			private static final long serialVersionUID = 4828577683865983766L;
+			@Override
+			public Integer call(Integer arg0, Integer arg1) throws Exception {
+				return arg0 + arg1;
+			}
+		}); 
+	    
+	    System.out.println("Total rows saved as Json (Alternate) : " + totalCount);	    
+	    
+	    sc.close();
+	    
+	}
+	
 	public static void convertToJsonB() {
 		//Start the job
 	    SparkConf conf = new SparkConf().setAppName("MigrateGSApp").setMaster("local["+ConfigApp.NUM_NODES+"]");
