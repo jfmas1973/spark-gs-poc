@@ -1,5 +1,6 @@
 package es.jfmas.tests.spark;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,6 +21,69 @@ public class MigrateGSApp implements Serializable {
 
 	/** Serial Id **/
 	private static final long serialVersionUID = 8062176647661101782L;
+
+	public static void convertToJsonB() {
+		//Start the job
+	    SparkConf conf = new SparkConf().setAppName("MigrateGSApp").setMaster("local["+ConfigApp.NUM_NODES+"]");
+	    JavaSparkContext sc = new JavaSparkContext(conf);
+
+	    int totalFlights = FlightService.countTotalFlights();
+	    List<Integer> blocks = new ArrayList<Integer>();
+	    
+	    int currentPosition = 0;
+	    while(currentPosition < totalFlights) {
+	    	blocks.add(currentPosition);
+	    	currentPosition = currentPosition + ConfigApp.BATCH_SIZE;
+	    }
+	    
+	    JavaRDD<Integer> rddBlocks = sc.parallelize(blocks, ConfigApp.NUM_NODES);
+	    JavaRDD<List<FlightModel>> rddListModels = rddBlocks.map(new Function<Integer, List<FlightModel>>() {
+			/** Serial id **/
+			private static final long serialVersionUID = -3198082958185451408L;
+			@Override
+			public List<FlightModel> call(Integer arg0) throws Exception {
+				return FlightService.readFlights(arg0, ConfigApp.BATCH_SIZE);
+			}
+		});
+
+	    // Big List, this could create an Out of Memory
+	    List<FlightModel> totalList = rddListModels.reduce(new Function2<List<FlightModel>, List<FlightModel>, List<FlightModel>>() {
+			/** Serial id **/
+			private static final long serialVersionUID = 2206508700421367647L;
+			@Override
+			public List<FlightModel> call(List<FlightModel> v1,
+					List<FlightModel> v2) throws Exception {
+				v1.addAll(v2);
+				return v1;
+			}
+	    	
+		});
+	    JavaRDD<FlightModel> rddModels = sc.parallelize(totalList, ConfigApp.NUM_NODES);
+	    JavaRDD<Integer> rddResults = rddModels.map(new Function<FlightModel, Integer>() {
+			/** Serial id **/
+			private static final long serialVersionUID = 5666614119965640487L;
+			@Override
+			public Integer call(FlightModel model) throws Exception {
+				return FlightService.saveAsJson(model);
+			}
+		});
+
+	    
+	    int totalCount = rddResults.reduce(new Function2<Integer, Integer, Integer>() {
+			/** Serial id **/
+			private static final long serialVersionUID = 4828577683865983766L;
+			@Override
+			public Integer call(Integer arg0, Integer arg1) throws Exception {
+				return arg0 + arg1;
+			}
+		}); 
+	    
+	    System.out.println("Total rows saved as Json (Alternate) : " + totalCount);	    
+	    
+	    sc.close();
+	    
+	}
+	
 	
 	public static void convertToJson() {
 		

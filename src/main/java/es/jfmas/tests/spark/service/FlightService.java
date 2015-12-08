@@ -23,6 +23,8 @@ public final class FlightService {
 			+ "UNIQUECARRIER,FLIGHTNUM,TAILNUM,ACTUALELAPSEDTIME,CRSELAPSEDTIME,AIRTIME,ARRDELAY,DEPDELAY,ORIGIN,DEST,DISTANCE,TAXIIN,TAXIOUT,CANCELLED,CANCELLATIONCODE,DIVERTED,"
 			+ "CARRIERDELAY,WEATHERDELAY,NASDELAY,SECURITYDELAY,LATEAIRCRAFTDELAY FROM FLIGHT) F) "
 			+ "where pos between ? and ?";
+
+	private static final String SELECT_COUNT_FLIGHT = "SELECT count(FLIGHTID) FROM FLIGHT";
 	
 	private static final String INSERT_FLIGHT_JSON = "Insert into FLIGHT_JSON (JSONID,CONTENT) values (flight_json_seq.nextval,?)";
 	
@@ -86,6 +88,33 @@ public final class FlightService {
 		return resultList;
 	}
 
+
+	public static Integer countTotalFlights() {
+		
+		Integer result = 0;
+
+		try (Connection conn = JdbcConnection.getConnection()) {
+
+			PreparedStatement pstmt = conn
+					.prepareStatement(SELECT_COUNT_FLIGHT);
+
+			ResultSet rset = pstmt.executeQuery();
+
+			if (rset.next()) {
+				result = rset.getInt(1);
+			}
+
+			logDataSourceStatistics();
+
+			rset.close();
+			pstmt.close();
+		} catch (Exception e) {
+			System.err.println(e.getMessage());
+			// Do nothing if fails.
+		}
+
+		return result;
+	}
 	
 	public static int saveDataFromLine(String line){
 		

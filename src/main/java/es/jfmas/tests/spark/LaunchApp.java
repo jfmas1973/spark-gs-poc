@@ -8,7 +8,8 @@ public class LaunchApp {
 		
 		//MigrateGSApp.importFromFileToDb();
 		//MigrateGSApp.convertToJsonSqlContext();
-		MigrateGSApp.convertToJson();
+		//MigrateGSApp.convertToJson();
+		MigrateGSApp.convertToJsonB();
 		
 		long elapsedTime = (System.currentTimeMillis() - initTime) / 1000; 
 		System.out.println("Elapsed Time : " + elapsedTime + " sec");
