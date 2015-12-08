@@ -8,7 +8,7 @@ import java.util.Calendar;
 import java.util.List;
 
 import es.jfmas.tests.spark.MigrateGSApp;
-import es.jfmas.tests.spark.exception.RetryException;
+import es.jfmas.tests.spark.exception.RetryCheckedException;
 import es.jfmas.tests.spark.model.FlightModel;
 import es.jfmas.tests.spark.utils.JdbcConnection;
 import es.jfmas.tests.spark.utils.MappingUtils;
@@ -81,7 +81,7 @@ public final class FlightService {
 			pstmt.close();
 		} catch(Exception e){
 			System.err.println(e.getMessage());
-			throw new RetryException("ERROR SAVING DATA IN ORACLE");
+			// Do nothing if fails.
 		} 
 		
 		return resultList;
@@ -133,9 +133,10 @@ public final class FlightService {
 			
 		} catch(Exception e){
 			System.err.println(e.getMessage());
-			throw new RetryException("ERROR SAVING DATA IN ORACLE");
+			// Do nothing if fails, in the total count these fails will not appear.
 		}
-		
+
+		return 0;
 	}
 
 	public static int saveAsJson(FlightModel model){
@@ -153,9 +154,10 @@ public final class FlightService {
 			
 		} catch(Exception e){
 			System.err.println(e.getMessage());
-			throw new RetryException("ERROR SAVING DATA IN ORACLE");
+			// Do nothing if fails, in the total count these fails will not appear.
 		}
-		
+
+		return 0;
 	}
 	
 	@SuppressWarnings("all")
